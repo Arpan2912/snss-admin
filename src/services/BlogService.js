@@ -12,7 +12,7 @@ const getBlogs = (data) => {
   // const headers = {
   //   'Content-Type': 'multipart/form-data',
   // }
-  return ApiRequest('get', GET_BLOGS, null, null)
+  return ApiRequest('get', `${GET_BLOGS}?is_admin=true`, null, null)
 }
 
 const updateBlog = (data) => {

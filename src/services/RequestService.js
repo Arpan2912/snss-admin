@@ -1,5 +1,7 @@
 import axios from 'axios'
-
+let baseURL = 'http://localhost:3001';
+// baseURL = 'http://43.205.226.137:3001'
+baseURL = 'https://www.snssindia.in'
 export const ApiRequest = async (method, url, data, headers) => {
   if (!headers) {
     headers = prepareHeader()
@@ -8,7 +10,7 @@ export const ApiRequest = async (method, url, data, headers) => {
     method,
     url,
     headers,
-    baseURL: 'http://localhost:3001',
+    baseURL,
   }
   if (data) {
     config.data = data;

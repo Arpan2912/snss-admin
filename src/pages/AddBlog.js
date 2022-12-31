@@ -7,7 +7,48 @@ import { addBlog, updateBlog } from '../services/BlogService';
 const Size = ReactQuill.Quill.import('attributors/style/size');
 Size.whitelist = ['14px', '16px', '18px'];
 ReactQuill.Quill.register(Size, true);
+const categories = [
+	{
+		name: 'Valuation Scoop',
+		value: 'valuation'
+	},
+	{
+		name: 'Tax Tides',
+		value: 'tax'
+	},
+	{
+		name: 'Fema Flash',
+		value: 'fema'
+	}
+];
 
+const subCategories = {
+	tax: [
+		{
+			name: 'Direct Tax',
+			value: 'direct_tax'
+		},
+		{
+			name: 'Indirect Tax',
+			value: 'indirect_tax'
+		},
+		{
+			name: 'GST',
+			value: 'gst'
+		}
+	]
+}
+
+const blogUser = [
+	{
+		name: 'Niranjan Shah',
+		email: 'niranjan@snssindia.in'
+	},
+	{
+		name: 'Sanyam Shah',
+		email: 'sanyam@snssindia.in'
+	}
+]
 const TextEditor = () => {
 	const [content, setContent] = useState('')
 	const [uuid, setUuid] = useState(null)
@@ -16,6 +57,10 @@ const TextEditor = () => {
 	const [newImage, setNewImage] = useState('');
 	const [title, setTitle] = useState('');
 	const [description, setDescription] = useState('');
+	const [category, setCategory] = useState('');
+	const [subCategory, setSubCategory] = useState('');
+	const [createdBy, setCreatedBy] = useState('');
+	const [createdByEmail, setCreatedByEmail] = useState('');
 	const [bucketUrl, setBucketUrl] = useState('')
 	const { state = {} } = useLocation();
 	const navigate = useNavigate();
@@ -31,6 +76,8 @@ const TextEditor = () => {
 		if (blog) {
 			setTitle(blog.title);
 			setDescription(blog.description);
+			setCategory(blog.category);
+			setSubCategory(blog.sub_category || '');
 			setContent(blog.content);
 			setOldImage(blog.poster_image);
 			setUuid(blog.uuid);
@@ -70,6 +117,15 @@ const TextEditor = () => {
 		formData.append('content', content)
 		formData.append('title', title)
 		formData.append('description', description)
+		formData.append('category', category)
+		formData.append('subCategory', subCategory)
+		formData.append('createdBy', createdBy)
+
+		const createdByUserDetail = blogUser.find((b) => b.name === createdBy);
+		const createdByUserEmail = createdByUserDetail.email ? createdByUserDetail.email : '';
+
+		formData.append('createdByEmail', createdByUserEmail);
+
 		if (image) {
 			formData.append('image', image)
 		}
@@ -100,6 +156,38 @@ const TextEditor = () => {
 	return (
 		<div style={{ margin: '10px 20% 10px 20%' }}>
 			<Form>
+				<Form.Group className="mb-2" controlId="description">
+					<Form.Label>Category</Form.Label>
+					<Form.Select aria-label="" onChange={(e) => { setCategory(e.target.value); setSubCategory(''); }}>
+						<option>Select</option>
+						{categories.map((c) => <option value={c.value}>{c.name}</option>)}
+					</Form.Select>
+				</Form.Group>
+
+				<Form.Group className="mb-2" controlId="description">
+					<Form.Label>Sub Category</Form.Label>
+					<Form.Select aria-label="" onChange={(e) => setSubCategory(e.target.value)}>
+						<option>Select</option>
+						{category && subCategories[category] && subCategories[category].map((c) => <option value={c.value}>{c.name}</option>)}
+					</Form.Select>
+					{/* <Form.Control
+						type="select"
+						placeholder="Category"
+						value={category}
+						maxLength={200}
+						onChange={(e) => setCategory(e.target.value)}
+					/> */}
+					{/* <div className='input-count-text'>{category.length}/200</div> */}
+				</Form.Group>
+
+				<Form.Group className="mb-2" controlId="created_by">
+					<Form.Label>Created By</Form.Label>
+					<Form.Select aria-label="" onChange={(e) => setCreatedBy(e.target.value)}>
+						<option>Select</option>
+						{blogUser.map((b) => <option value={b.name}>{b.name}</option>)}
+					</Form.Select>
+				</Form.Group>
+
 				<Form.Group className="mb-2" controlId="title">
 					<Form.Label>Title</Form.Label>
 					<Form.Control
@@ -122,6 +210,7 @@ const TextEditor = () => {
 					/>
 					<div className='input-count-text'>{description.length}/200</div>
 				</Form.Group>
+
 				<Form.Group className="mb-2" controlId="posterImage">
 					<Form.Label>Poster Image</Form.Label>
 					{!newImage && oldImage && <img className='blog-poster-image' src={`${bucketUrl}/${oldImage}`}></img>}

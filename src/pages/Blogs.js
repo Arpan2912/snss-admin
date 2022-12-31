@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 // import Header from '../components/Header';
-import { getBlogs } from '../services/BlogService';
-import { Row, Col, Card, Button } from 'react-bootstrap';
+import { getBlogs, updateBlog } from '../services/BlogService';
+import { Table, Row, Col, Card, Button } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router'
 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -34,6 +34,27 @@ export default function Blogs(props) {
     }
   }
 
+  const unpublishBlog = async (blog) => {
+    const updateObj = {
+      uuid: blog.uuid,
+      isPublished: !blog.is_published
+    }
+
+    await updateBlog(updateObj);
+    await getAllBlogs();
+  }
+
+  const deleteBlog = async (blog) => {
+    const updateObj = {
+      uuid: blog.uuid,
+      isDeleted: true
+    }
+
+    await updateBlog(updateObj);
+    await getAllBlogs();
+  }
+
+
   return (
     <div
       style={{ marginLeft: '100px', marginRight: '100px', marginTop: '20px' }}
@@ -44,15 +65,32 @@ export default function Blogs(props) {
         </Col>
       </Row>
       <Row>
-        {blogs.map((b) => <Col md={4}>
-          <Card style={{ margin: '0px 2px 0px 2px' }} >
-            {bucketUrl && <img src={`${bucketUrl}/${b.poster_image}`} className="poster-list-image"></img>}
-            <Card.Body>
-              <div onClick={() => openBlog(b)} className="blog-list-title">{b.title}</div>
-              <div className="blog-list-description">{b.description}</div>
-            </Card.Body>
-          </Card>
-        </Col>
+        <Table className='striped bordered hover'>
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Title</th>
+              <th>Created By</th>
+              <th>Created Date</th>
+              <th>Published</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {blogs.map((b) => <tr>
+              <td>{b.id}</td>
+              <td>{b.title}</td>
+              <td>{b.created_by}</td>
+              <td>{b.created_at}</td>
+              <td>{!(b.is_published === null || b.is_published === undefined) && b.is_published.toString()}</td>
+              <td>
+                <Button variant="primary" onClick={() => openBlog(b)} style={{ fontSize: '14px' }}>Edit</Button>{' '}
+                <Button variant="danger" style={{ fontSize: '14px' }} onClick={() => deleteBlog(b)}>Delete</Button>{' '}
+                <Button variant="warning" style={{ fontSize: '14px' }} onClick={() => unpublishBlog(b)}>{b.is_published ? 'Unpublish' : 'Publish'}</Button>{' '}
+              </td>
+            </tr>)}
+          </tbody>
+        </Table>
         )}
       </Row>
     </div>)
