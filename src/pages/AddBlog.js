@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import ReactQuill from 'react-quill'
-import { Form, Button } from 'react-bootstrap';
+import { Form, Button, Card } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router'
 import { addBlog, updateBlog } from '../services/BlogService';
 
@@ -80,6 +80,8 @@ const TextEditor = () => {
 			setSubCategory(blog.sub_category || '');
 			setContent(blog.content);
 			setOldImage(blog.poster_image);
+			setCreatedBy(blog.created_by);
+			setCreatedByEmail(blog.created_by_email);
 			setUuid(blog.uuid);
 		}
 		if (bucketUrl) {
@@ -122,7 +124,7 @@ const TextEditor = () => {
 		formData.append('createdBy', createdBy)
 
 		const createdByUserDetail = blogUser.find((b) => b.name === createdBy);
-		const createdByUserEmail = createdByUserDetail.email ? createdByUserDetail.email : '';
+		const createdByUserEmail = createdByUserDetail && createdByUserDetail.email ? createdByUserDetail.email : '';
 
 		formData.append('createdByEmail', createdByUserEmail);
 
@@ -158,7 +160,7 @@ const TextEditor = () => {
 			<Form>
 				<Form.Group className="mb-2" controlId="description">
 					<Form.Label>Category</Form.Label>
-					<Form.Select aria-label="" onChange={(e) => { setCategory(e.target.value); setSubCategory(''); }}>
+					<Form.Select aria-label="" value={category} onChange={(e) => { setCategory(e.target.value); setSubCategory(''); }}>
 						<option>Select</option>
 						{categories.map((c) => <option value={c.value}>{c.name}</option>)}
 					</Form.Select>
@@ -166,7 +168,7 @@ const TextEditor = () => {
 
 				<Form.Group className="mb-2" controlId="description">
 					<Form.Label>Sub Category</Form.Label>
-					<Form.Select aria-label="" onChange={(e) => setSubCategory(e.target.value)}>
+					<Form.Select aria-label="" value={subCategory} onChange={(e) => setSubCategory(e.target.value)}>
 						<option>Select</option>
 						{category && subCategories[category] && subCategories[category].map((c) => <option value={c.value}>{c.name}</option>)}
 					</Form.Select>
@@ -182,7 +184,7 @@ const TextEditor = () => {
 
 				<Form.Group className="mb-2" controlId="created_by">
 					<Form.Label>Created By</Form.Label>
-					<Form.Select aria-label="" onChange={(e) => setCreatedBy(e.target.value)}>
+					<Form.Select aria-label="" value={createdBy} onChange={(e) => setCreatedBy(e.target.value)}>
 						<option>Select</option>
 						{blogUser.map((b) => <option value={b.name}>{b.name}</option>)}
 					</Form.Select>
@@ -220,14 +222,22 @@ const TextEditor = () => {
 
 				<Form.Group className="mb-2" controlId="content">
 					<Form.Label>Content</Form.Label>
-					<ReactQuill
+					<Form.Control as="textarea" rows={20} value={content} onChange={(v) => setContent(v.target.value)} />
+
+					{/* <ReactQuill
 						value={content}
 						modules={modules}
 						onChange={(v) => setContent(v)}
-					/>
+					/> */}
 				</Form.Group>
 				<Button onClick={submitHandler}>Submit</Button>
 			</Form>
+			<h3>Preview</h3>
+			<Card>
+				<Card.Body>
+					<div className='blog-content' dangerouslySetInnerHTML={{ __html: content }} />
+				</Card.Body>
+			</Card>
 		</div >
 	)
 }
