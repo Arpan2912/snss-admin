@@ -12,9 +12,9 @@ code {
     monospace;
 }
 
-.quill>.ql-toolbar:first-child {
+/* .quill>.ql-toolbar:first-child {
   display: none !important;
-}
+} */
 
 #res {
   white-space: pre;

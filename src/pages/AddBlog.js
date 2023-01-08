@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import ReactQuill from 'react-quill'
 import { Form, Button, Card } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router'
-import { addBlog, updateBlog } from '../services/BlogService';
+import { addBlog, updateBlog, getBlogDetail } from '../services/BlogService';
 
 const Size = ReactQuill.Quill.import('attributors/style/size');
 Size.whitelist = ['14px', '16px', '18px'];
@@ -13,12 +13,16 @@ const categories = [
 		value: 'valuation'
 	},
 	{
-		name: 'Tax Tides',
+		name: 'Tax Tidings',
 		value: 'tax'
 	},
 	{
 		name: 'Fema Flash',
 		value: 'fema'
+	},
+	{
+		name: 'Global Business Setup',
+		value: 'global_business_setup'
 	}
 ];
 
@@ -29,12 +33,52 @@ const subCategories = {
 			value: 'direct_tax'
 		},
 		{
-			name: 'Indirect Tax',
-			value: 'indirect_tax'
+			name: 'International Tax',
+			value: 'international_tax'
+		},
+		{
+			name: 'Transfer Pricing',
+			value: 'transfer_pricing'
 		},
 		{
 			name: 'GST',
 			value: 'gst'
+		},
+		{
+			name: 'NRI taxation',
+			value: 'nri_taxation'
+		}
+	],
+	fema: [
+		{
+			name: 'Foreign Direct Investment',
+			value: 'foreign_direct_investment'
+		},
+		{
+			name: 'Overseas Investment',
+			value: 'overseas_investment'
+		},
+		{
+			name: 'External Commercial Borrowings',
+			value: 'external_commercial_borrowings'
+		},
+		{
+			name: 'Dealing In Immovable properties by NRI',
+			value: 'dealing_in_immovable_properties_by_nri'
+		}
+	],
+	global_business_setup: [
+		{
+			name: 'United Arab Emirates(UAE)',
+			value: 'uae'
+		},
+		{
+			name: 'United States of America(USA)',
+			value: 'usa'
+		},
+		{
+			name: 'Canada',
+			value: 'canada'
 		}
 	]
 }
@@ -49,19 +93,34 @@ const blogUser = [
 		email: 'sanyam@snssindia.in'
 	}
 ]
+
+const typeOptions = [
+	{
+		name: 'Blog',
+		value: 'blog'
+	},
+	{
+		name: 'News and Update',
+		value: 'news_and_update'
+	},
+]
 const TextEditor = () => {
 	const [content, setContent] = useState('')
 	const [uuid, setUuid] = useState(null)
 	const [image, setImage] = useState('');
+	const [attachments, setAttachments] = useState('');
+	const [oldAttachments, setOldAttachments] = useState([]);
 	const [oldImage, setOldImage] = useState('');
 	const [newImage, setNewImage] = useState('');
 	const [title, setTitle] = useState('');
+	const [type, setType] = useState('blog');
 	const [description, setDescription] = useState('');
 	const [category, setCategory] = useState('');
 	const [subCategory, setSubCategory] = useState('');
 	const [createdBy, setCreatedBy] = useState('');
 	const [createdByEmail, setCreatedByEmail] = useState('');
 	const [bucketUrl, setBucketUrl] = useState('')
+	const [deletedAttachments, setDeletedAttachments] = useState([])
 	const { state = {} } = useLocation();
 	const navigate = useNavigate();
 	// const [blogs, setBlogs] = useState([]);
@@ -73,16 +132,18 @@ const TextEditor = () => {
 			blog = state.blog;
 			bucketUrl = state.bucketUrl;
 		}
-		if (blog) {
-			setTitle(blog.title);
-			setDescription(blog.description);
-			setCategory(blog.category);
-			setSubCategory(blog.sub_category || '');
-			setContent(blog.content);
-			setOldImage(blog.poster_image);
-			setCreatedBy(blog.created_by);
-			setCreatedByEmail(blog.created_by_email);
-			setUuid(blog.uuid);
+		if (blog && blog.uuid) {
+			getBlogDetailFunc(blog.uuid)
+			// setTitle(blog.title);
+			// setDescription(blog.description);
+			// setCategory(blog.category);
+			// setSubCategory(blog.sub_category || '');
+			// setContent(blog.content);
+			// setOldImage(blog.poster_image);
+			// setCreatedBy(blog.created_by);
+			// setCreatedByEmail(blog.created_by_email);
+			// setUuid(blog.uuid);
+
 		}
 		if (bucketUrl) {
 			setBucketUrl(bucketUrl)
@@ -105,6 +166,31 @@ const TextEditor = () => {
 		toolbar: toolbarOptions,
 	}
 
+	const getBlogDetailFunc = async (uuid) => {
+		const blogDetail = await getBlogDetail(uuid);
+		const { blog, bucketUrl } = blogDetail.data;
+		setBucketUrl(bucketUrl);
+		setBlogStates(blog)
+		// console.log("blogDetail", blogDetail);
+	}
+
+	const setBlogStates = (blog) => {
+		setTitle(blog.title);
+		setDescription(blog.description);
+		setCategory(blog.category);
+		setSubCategory(blog.sub_category || '');
+		setContent(blog.content);
+		setOldImage(blog.poster_image);
+		setCreatedBy(blog.created_by);
+		setCreatedByEmail(blog.created_by_email);
+		setType(blog.type || 'blog');
+		setUuid(blog.uuid);
+		if (blog.attachments) {
+			setOldAttachments(blog.attachments);
+		}
+	}
+
+
 	const selectImage = (e) => {
 		console.log("e", e.target.files)
 		console.log("e", e.target.file)
@@ -114,6 +200,16 @@ const TextEditor = () => {
 		setNewImage(newImage)
 	}
 
+	const selectAttachment = (e) => {
+		console.log("e", e.target.files)
+		console.log("e", e.target.file)
+		setAttachments(e.target.files);
+		// const newImage = URL.createObjectURL(e.target.files[0])
+		// console.log("newImage", newImage)
+		// setNewImage(newImage)
+	}
+
+
 	const submitHandler = async () => {
 		const formData = new FormData()
 		formData.append('content', content)
@@ -122,6 +218,7 @@ const TextEditor = () => {
 		formData.append('category', category)
 		formData.append('subCategory', subCategory)
 		formData.append('createdBy', createdBy)
+		formData.append('type', type)
 
 		const createdByUserDetail = blogUser.find((b) => b.name === createdBy);
 		const createdByUserEmail = createdByUserDetail && createdByUserDetail.email ? createdByUserDetail.email : '';
@@ -130,6 +227,14 @@ const TextEditor = () => {
 
 		if (image) {
 			formData.append('image', image)
+		}
+		if (attachments) {
+			for (let i = 0; i < attachments.length; i++) {
+				formData.append('attachment', attachments[i])
+			}
+		}
+		if (deletedAttachments && deletedAttachments.length > 0) {
+			formData.append('deletedAttachments', deletedAttachments.join(','))
 		}
 		let msg = ''
 		try {
@@ -155,6 +260,12 @@ const TextEditor = () => {
 		}
 	}
 
+	const deleteAttachment = (attachment) => {
+		const deletedAttachmentsBlock = [...deletedAttachments];
+		deletedAttachmentsBlock.push(attachment.uuid);
+		setDeletedAttachments([...deletedAttachmentsBlock])
+	}
+
 	return (
 		<div style={{ margin: '10px 20% 10px 20%' }}>
 			<Form>
@@ -171,6 +282,20 @@ const TextEditor = () => {
 					<Form.Select aria-label="" value={subCategory} onChange={(e) => setSubCategory(e.target.value)}>
 						<option>Select</option>
 						{category && subCategories[category] && subCategories[category].map((c) => <option value={c.value}>{c.name}</option>)}
+					</Form.Select>
+					{/* <Form.Control
+						type="select"
+						placeholder="Category"
+						value={category}
+						maxLength={200}
+						onChange={(e) => setCategory(e.target.value)}
+					/> */}
+					{/* <div className='input-count-text'>{category.length}/200</div> */}
+				</Form.Group>
+				<Form.Group className="mb-2" controlId="description">
+					<Form.Label>Type</Form.Label>
+					<Form.Select aria-label="" value={type} onChange={(e) => setType(e.target.value)}>
+						{typeOptions.map((c) => <option value={c.value}>{c.name}</option>)}
 					</Form.Select>
 					{/* <Form.Control
 						type="select"
@@ -229,6 +354,16 @@ const TextEditor = () => {
 						modules={modules}
 						onChange={(v) => setContent(v)}
 					/> */}
+				</Form.Group>
+
+				<Form.Group className="mb-2" controlId="attachment">
+					<Form.Label>Attachments</Form.Label>
+					{oldAttachments && oldAttachments.map((a) =>
+						<div>{a.attachment} <span onClick={() => deleteAttachment(a)}>X</span></div>
+					)}
+					{/* {!newImage && oldImage && <img className='blog-poster-image' src={`${bucketUrl}/${oldImage}`}></img>} */}
+					{/* {newImage && <img className='blog-poster-image' src={`${newImage}`}></img>} */}
+					<Form.Control type="file" placeholder="Upload Attachments" multiple onChange={selectAttachment} />
 				</Form.Group>
 				<Button onClick={submitHandler}>Submit</Button>
 			</Form>

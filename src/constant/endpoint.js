@@ -3,4 +3,5 @@ export const endpoints = {
   'UPDATE_BLOG': '/blog',
   'GET_BLOG': '/blog',
   'GET_BLOGS': '/blog/blogs',
+  'GET_BLOG_ATTACHMENTS':'/blog/blog-attachments',
 }

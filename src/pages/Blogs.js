@@ -70,6 +70,7 @@ export default function Blogs(props) {
             <tr>
               <th>Id</th>
               <th>Title</th>
+              <th>Type</th>
               <th>Created By</th>
               <th>Created Date</th>
               <th>Published</th>
@@ -80,6 +81,7 @@ export default function Blogs(props) {
             {blogs.map((b) => <tr>
               <td>{b.id}</td>
               <td>{b.title}</td>
+              <td>{b.type}</td>
               <td>{b.created_by}</td>
               <td>{b.created_at}</td>
               <td>{!(b.is_published === null || b.is_published === undefined) && b.is_published.toString()}</td>
