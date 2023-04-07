@@ -54,6 +54,11 @@ export default function Blogs(props) {
     await getAllBlogs();
   }
 
+  const copyToClipboard = (url) => {
+    const textToCopy = `https://www.snssindia.in/api/blog/${url}`
+    // navigator.clipboard.writeText(textToCopy)
+    alert(textToCopy);
+  }
 
   return (
     <div
@@ -86,6 +91,7 @@ export default function Blogs(props) {
               <td>{b.created_at}</td>
               <td>{!(b.is_published === null || b.is_published === undefined) && b.is_published.toString()}</td>
               <td>
+              <Button variant="primary" onClick={() => copyToClipboard(b.url)} style={{ fontSize: '14px' }}>Share</Button>{' '}
                 <Button variant="primary" onClick={() => openBlog(b)} style={{ fontSize: '14px' }}>Edit</Button>{' '}
                 <Button variant="danger" style={{ fontSize: '14px' }} onClick={() => deleteBlog(b)}>Delete</Button>{' '}
                 <Button variant="warning" style={{ fontSize: '14px' }} onClick={() => unpublishBlog(b)}>{b.is_published ? 'Unpublish' : 'Publish'}</Button>{' '}
@@ -93,7 +99,6 @@ export default function Blogs(props) {
             </tr>)}
           </tbody>
         </Table>
-        )}
       </Row>
     </div>)
 }

@@ -133,7 +133,7 @@ const TextEditor = () => {
 			bucketUrl = state.bucketUrl;
 		}
 		if (blog && blog.uuid) {
-			getBlogDetailFunc(blog.uuid)
+			getBlogDetailFunc(blog.url)
 			// setTitle(blog.title);
 			// setDescription(blog.description);
 			// setCategory(blog.category);

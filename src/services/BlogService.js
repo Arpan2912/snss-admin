@@ -23,7 +23,7 @@ const updateBlog = (data) => {
 }
 
 const getBlogDetail = (uuid) => {
-  return ApiRequest('get', `${GET_BLOG}?uuid=${uuid}`, null, null)
+  return ApiRequest('get', `${GET_BLOG}?url=${uuid}`, null, null)
 }
 
 
