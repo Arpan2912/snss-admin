@@ -104,6 +104,10 @@ const typeOptions = [
 		name: 'News and Update',
 		value: 'news_and_update'
 	},
+	{
+		name: 'Article',
+		value: 'article'
+	},
 ]
 const TextEditor = () => {
 	const [content, setContent] = useState('')
