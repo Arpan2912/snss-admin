@@ -9,7 +9,7 @@ const addArticle = (data) => {
 }
 
 const getArticles = (data) => {
-    return ApiRequest('get', `${GET_ARTICLES}?is_admin=true&type=article`, null, null)
+    return ApiRequest('get', `${GET_ARTICLES}?is_admin=true`, null, null)
 }
 
 const updateArticle = (data) => {
@@ -20,7 +20,7 @@ const updateArticle = (data) => {
 }
 
 const getArticleDetail = (uuid) => {
-    return ApiRequest('get', `${GET_ARTICLE}?url=${uuid}`, null, null)
+    return ApiRequest('get', `${GET_ARTICLE}?uuid=${uuid}`, null, null)
 }
 
 

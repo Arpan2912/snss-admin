@@ -1,7 +1,7 @@
 import axios from 'axios'
 let baseURL = 'http://localhost:3000';
 // baseURL = 'http://43.205.226.137:3001'
-// baseURL = 'https://www.snssindia.in'
+baseURL = 'https://www.snssindia.in'
 export const ApiRequest = async (method, url, data, headers) => {
   if (!headers) {
     headers = prepareHeader().headers
@@ -20,8 +20,8 @@ export const ApiRequest = async (method, url, data, headers) => {
     console.log("response", response);
     return response.data;
   } catch (e) {
-    console.log("e.response.data", e.resonse.data);
-    throw e.resonse.data
+    console.log("e.response.data", e.response?.data);
+    throw e.response?.data || e;
   }
 }
 

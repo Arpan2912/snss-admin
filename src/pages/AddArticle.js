@@ -22,7 +22,7 @@ const TextEditor = () => {
             bucketUrl = state.bucketUrl;
         }
         if (article && article.uuid) {
-            getArticleDetailFunc(article.url)
+            getArticleDetailFunc(article.uuid)
         }
         if (bucketUrl) {
             setBucketUrl(bucketUrl)
