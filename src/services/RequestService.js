@@ -1,7 +1,6 @@
 import axios from 'axios'
-let baseURL = 'http://localhost:3000';
-// baseURL = 'http://43.205.226.137:3001'
-baseURL = 'https://www.snssindia.in'
+
+const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
 export const ApiRequest = async (method, url, data, headers) => {
   if (!headers) {
     headers = prepareHeader().headers

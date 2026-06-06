@@ -1,88 +1,14 @@
 import { useState, useEffect } from 'react'
 import ReactQuill from 'react-quill'
-import { Form, Button, Card } from 'react-bootstrap';
+import { Form, Button, Card, ProgressBar } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router'
 import { addBlog, updateBlog, getBlogDetail } from '../services/BlogService';
+import { uploadFileToS3 } from '../services/UploadService';
 import { categories, subCategories } from '../constant/category';
 
 const Size = ReactQuill.Quill.import('attributors/style/size');
 Size.whitelist = ['14px', '16px', '18px'];
 ReactQuill.Quill.register(Size, true);
-// const categories = [
-// 	{
-// 		name: 'Valuation Scoop',
-// 		value: 'valuation'
-// 	},
-// 	{
-// 		name: 'Tax Tidings',
-// 		value: 'tax'
-// 	},
-// 	{
-// 		name: 'Fema Flash',
-// 		value: 'fema'
-// 	},
-// 	{
-// 		name: 'Global Business Setup',
-// 		value: 'global_business_setup'
-// 	}
-// ];
-
-// const subCategories = {
-// 	tax: [
-// 		{
-// 			name: 'Direct Tax',
-// 			value: 'direct_tax'
-// 		},
-// 		{
-// 			name: 'International Tax',
-// 			value: 'international_tax'
-// 		},
-// 		{
-// 			name: 'Transfer Pricing',
-// 			value: 'transfer_pricing'
-// 		},
-// 		{
-// 			name: 'GST',
-// 			value: 'gst'
-// 		},
-// 		{
-// 			name: 'NRI taxation',
-// 			value: 'nri_taxation'
-// 		}
-// 	],
-// 	fema: [
-// 		{
-// 			name: 'Foreign Direct Investment',
-// 			value: 'foreign_direct_investment'
-// 		},
-// 		{
-// 			name: 'Overseas Investment',
-// 			value: 'overseas_investment'
-// 		},
-// 		{
-// 			name: 'External Commercial Borrowings',
-// 			value: 'external_commercial_borrowings'
-// 		},
-// 		{
-// 			name: 'Dealing In Immovable properties by NRI',
-// 			value: 'dealing_in_immovable_properties_by_nri'
-// 		}
-// 	],
-// 	global_business_setup: [
-// 		{
-// 			name: 'United Arab Emirates(UAE)',
-// 			value: 'uae'
-// 		},
-// 		{
-// 			name: 'United States of America(USA)',
-// 			value: 'usa'
-// 		},
-// 		{
-// 			name: 'Canada',
-// 			value: 'canada'
-// 		}
-// 	]
-// }
 
 const blogUser = [
 	{
@@ -126,6 +52,8 @@ const TextEditor = () => {
 	const [createdByEmail, setCreatedByEmail] = useState('');
 	const [bucketUrl, setBucketUrl] = useState('')
 	const [deletedAttachments, setDeletedAttachments] = useState([])
+	const [uploading, setUploading] = useState(false);
+	const [uploadProgress, setUploadProgress] = useState('');
 	const { state = {} } = useLocation();
 	const navigate = useNavigate();
 	// const [blogs, setBlogs] = useState([]);
@@ -139,16 +67,6 @@ const TextEditor = () => {
 		}
 		if (blog && blog.uuid) {
 			getBlogDetailFunc(blog.url)
-			// setTitle(blog.title);
-			// setDescription(blog.description);
-			// setCategory(blog.category);
-			// setSubCategory(blog.sub_category || '');
-			// setContent(blog.content);
-			// setOldImage(blog.poster_image);
-			// setCreatedBy(blog.created_by);
-			// setCreatedByEmail(blog.created_by_email);
-			// setUuid(blog.uuid);
-
 		}
 		if (bucketUrl) {
 			setBucketUrl(bucketUrl)
@@ -209,59 +127,75 @@ const TextEditor = () => {
 		console.log("e", e.target.files)
 		console.log("e", e.target.file)
 		setAttachments(e.target.files);
-		// const newImage = URL.createObjectURL(e.target.files[0])
-		// console.log("newImage", newImage)
-		// setNewImage(newImage)
 	}
 
 
 	const submitHandler = async () => {
-		const formData = new FormData()
-		formData.append('content', content)
-		formData.append('title', title)
-		formData.append('description', description)
-		formData.append('category', category)
-		formData.append('subCategory', subCategory)
-		formData.append('createdBy', createdBy)
-		formData.append('type', type)
-
-		const createdByUserDetail = blogUser.find((b) => b.name === createdBy);
-		const createdByUserEmail = createdByUserDetail && createdByUserDetail.email ? createdByUserDetail.email : '';
-
-		formData.append('createdByEmail', createdByUserEmail);
-
-		if (image) {
-			formData.append('image', image)
-		}
-		if (attachments) {
-			for (let i = 0; i < attachments.length; i++) {
-				formData.append('attachment', attachments[i])
-			}
-		}
-		if (deletedAttachments && deletedAttachments.length > 0) {
-			formData.append('deletedAttachments', deletedAttachments.join(','))
-		}
-		let msg = ''
 		try {
+			setUploading(true);
+			let uploadStep = 0;
+			const totalUploads = (image ? 1 : 0) + (attachments ? attachments.length : 0);
+
+			// Step 1: Upload poster image to S3 via presigned URL
+			let posterImageKey = null;
+			if (image) {
+				uploadStep++;
+				setUploadProgress(`Uploading image (${uploadStep}/${totalUploads})...`);
+				const imageResult = await uploadFileToS3(image);
+				posterImageKey = imageResult.key;
+			}
+
+			// Step 2: Upload attachments to S3 via presigned URLs
+			const attachmentKeys = [];
+			if (attachments && attachments.length > 0) {
+				for (let i = 0; i < attachments.length; i++) {
+					uploadStep++;
+					setUploadProgress(`Uploading file ${uploadStep}/${totalUploads}...`);
+					const result = await uploadFileToS3(attachments[i]);
+					attachmentKeys.push(result);
+				}
+			}
+
+			// Step 3: Submit blog data as JSON (no files in this request)
+			setUploadProgress('Saving blog...');
+
+			const createdByUserDetail = blogUser.find((b) => b.name === createdBy);
+			const createdByUserEmail = createdByUserDetail && createdByUserDetail.email ? createdByUserDetail.email : '';
+
+			const blogData = {
+				content,
+				title,
+				description,
+				category,
+				subCategory,
+				createdBy,
+				type,
+				createdByEmail: createdByUserEmail,
+				posterImageKey,
+				attachmentKeys,
+			};
+
+			if (deletedAttachments && deletedAttachments.length > 0) {
+				blogData.deletedAttachments = deletedAttachments.join(',');
+			}
+
+			let msg = ''
 			if (uuid) {
-				// const obj = {
-				// 	content,
-				// 	title,
-				// 	description,
-				// 	uuid: blog.uuid
-				// }
-				formData.append('uuid', uuid)
-				await updateBlog(formData);
+				blogData.uuid = uuid;
+				await updateBlog(blogData);
 				msg = 'Blog updated successfully'
-				// await updateBlog(obj);
 			} else {
-				await addBlog(formData)
-				msg = 'Blog creatd successfully'
+				await addBlog(blogData)
+				msg = 'Blog created successfully'
 			}
 			alert(msg)
 			navigate('/')
 		} catch (e) {
 			console.log("e", e)
+			alert('Error processing request')
+		} finally {
+			setUploading(false);
+			setUploadProgress('');
 		}
 	}
 
@@ -288,28 +222,12 @@ const TextEditor = () => {
 						<option>Select</option>
 						{category && subCategories[category] && subCategories[category].map((c) => <option value={c.value}>{c.name}</option>)}
 					</Form.Select>
-					{/* <Form.Control
-						type="select"
-						placeholder="Category"
-						value={category}
-						maxLength={200}
-						onChange={(e) => setCategory(e.target.value)}
-					/> */}
-					{/* <div className='input-count-text'>{category.length}/200</div> */}
 				</Form.Group>
 				<Form.Group className="mb-2" controlId="description">
 					<Form.Label>Type</Form.Label>
 					<Form.Select aria-label="" value={type} onChange={(e) => setType(e.target.value)}>
 						{typeOptions.map((c) => <option value={c.value}>{c.name}</option>)}
 					</Form.Select>
-					{/* <Form.Control
-						type="select"
-						placeholder="Category"
-						value={category}
-						maxLength={200}
-						onChange={(e) => setCategory(e.target.value)}
-					/> */}
-					{/* <div className='input-count-text'>{category.length}/200</div> */}
 				</Form.Group>
 
 				<Form.Group className="mb-2" controlId="created_by">
@@ -370,7 +288,16 @@ const TextEditor = () => {
 					{/* {newImage && <img className='blog-poster-image' src={`${newImage}`}></img>} */}
 					<Form.Control type="file" placeholder="Upload Attachments" multiple onChange={selectAttachment} />
 				</Form.Group>
-				<Button onClick={submitHandler}>Submit</Button>
+
+				{uploading && (
+					<div className="mb-3">
+						<ProgressBar animated now={100} label={uploadProgress} />
+					</div>
+				)}
+
+				<Button onClick={submitHandler} disabled={uploading}>
+					{uploading ? uploadProgress : 'Submit'}
+				</Button>
 			</Form>
 			<h3>Preview</h3>
 			<Card>

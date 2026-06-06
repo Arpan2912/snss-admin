@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Form, Button } from 'react-bootstrap';
+import { Form, Button, ProgressBar } from 'react-bootstrap';
 import { useNavigate, useLocation } from 'react-router'
 import { addArticle, updateArticle, getArticleDetail } from '../services/ArticleService';
+import { uploadFileToS3 } from '../services/UploadService';
 
 const TextEditor = () => {
     const [uuid, setUuid] = useState(null)
@@ -12,6 +13,8 @@ const TextEditor = () => {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [bucketUrl, setBucketUrl] = useState('')
     const [deletedAttachments, setDeletedAttachments] = useState([])
+    const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState('');
     const { state = {} } = useLocation();
     const navigate = useNavigate();
 
@@ -51,33 +54,44 @@ const TextEditor = () => {
     }
 
     const submitHandler = async () => {
-        const formData = new FormData()
-        formData.append('title', title)
-        formData.append('forum', forum)
-        formData.append('date', date)
-        formData.append('type', 'article') // Ensure type is article
-        formData.append('createdBy', 'Admin')
-        formData.append('createdByEmail', 'admin@snssindia.in')
-        formData.append('description', title) // Use title as fallback description
-        formData.append('content', title) // Use title as fallback content
-
-        if (attachments) {
-            for (let i = 0; i < attachments.length; i++) {
-                formData.append('attachment', attachments[i])
-            }
-        }
-        if (deletedAttachments && deletedAttachments.length > 0) {
-            formData.append('deletedAttachments', deletedAttachments.join(','))
-        }
-
-        let msg = ''
         try {
+            setUploading(true);
+
+            // Step 1: Upload attachments to S3 via presigned URLs
+            const attachmentKeys = [];
+            if (attachments && attachments.length > 0) {
+                for (let i = 0; i < attachments.length; i++) {
+                    setUploadProgress(`Uploading file ${i + 1} of ${attachments.length}...`);
+                    const result = await uploadFileToS3(attachments[i]);
+                    attachmentKeys.push(result);
+                }
+            }
+
+            // Step 2: Submit article data as JSON (no files in this request)
+            setUploadProgress('Saving article...');
+            const articleData = {
+                title,
+                forum,
+                date,
+                type: 'article',
+                createdBy: 'Admin',
+                createdByEmail: 'admin@snssindia.in',
+                description: title,
+                content: title,
+                attachmentKeys,
+            };
+
+            if (deletedAttachments && deletedAttachments.length > 0) {
+                articleData.deletedAttachments = deletedAttachments.join(',');
+            }
+
+            let msg = ''
             if (uuid) {
-                formData.append('uuid', uuid)
-                await updateArticle(formData);
+                articleData.uuid = uuid;
+                await updateArticle(articleData);
                 msg = 'Article updated successfully'
             } else {
-                await addArticle(formData)
+                await addArticle(articleData)
                 msg = 'Article created successfully'
             }
             alert(msg)
@@ -85,6 +99,9 @@ const TextEditor = () => {
         } catch (e) {
             console.log("e", e)
             alert('Error processing request')
+        } finally {
+            setUploading(false);
+            setUploadProgress('');
         }
     }
 
@@ -139,11 +156,17 @@ const TextEditor = () => {
                     <Form.Control type="file" placeholder="Upload Attachments" multiple onChange={selectAttachment} />
                 </Form.Group>
 
+                {uploading && (
+                    <div className="mb-3">
+                        <ProgressBar animated now={100} label={uploadProgress} />
+                    </div>
+                )}
+
                 <div className="d-grid gap-2 mt-4">
-                    <Button variant="primary" size="lg" onClick={submitHandler}>
-                        {uuid ? 'Update Article' : 'Create Article'}
+                    <Button variant="primary" size="lg" onClick={submitHandler} disabled={uploading}>
+                        {uploading ? uploadProgress : (uuid ? 'Update Article' : 'Create Article')}
                     </Button>
-                    <Button variant="outline-secondary" onClick={() => navigate('/articles')}>
+                    <Button variant="outline-secondary" onClick={() => navigate('/articles')} disabled={uploading}>
                         Cancel
                     </Button>
                 </div>

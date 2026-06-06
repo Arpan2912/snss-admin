@@ -8,4 +8,5 @@ export const endpoints = {
   'UPDATE_ARTICLE': '/api/article',
   'GET_ARTICLE': '/api/article',
   'GET_ARTICLES': '/api/articles',
+  'GET_SIGNED_URL': '/api/upload/signed-url',
 }
