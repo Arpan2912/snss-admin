@@ -75,6 +75,7 @@ export default function Articles(props) {
                             <th>Title</th>
                             <th>Forum</th>
                             <th>Created By</th>
+                            <th>Publication Date</th>
                             <th>Created Date</th>
                             <th>Published</th>
                             <th>Actions</th>
@@ -86,6 +87,7 @@ export default function Articles(props) {
                             <td>{a.title}</td>
                             <td>{a.forum || a.category}</td>
                             <td>{a.created_by}</td>
+                            <td>{a.publication_date ? a.publication_date.split('T')[0] : '-'}</td>
                             <td>{a.created_at}</td>
                             <td>{!(a.is_published === null || a.is_published === undefined) && a.is_published.toString()}</td>
                             <td>

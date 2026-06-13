@@ -1,25 +1,54 @@
-import React, { useEffect } from 'react';
-import { Routes, Route, Link, useLocation } from "react-router-dom";
+import React from 'react';
+import { Routes, Route } from "react-router-dom";
 import Header from './components/Header';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 import AddBlog from './pages/AddBlog';
 import Blogs from './pages/Blogs';
 import AddArticle from './pages/AddArticle';
 import Articles from './pages/Articles';
-import logo from './logo.svg';
+import News from './pages/News';
+import Login from './pages/Login';
 import 'bootstrap/dist/css/bootstrap.min.css';
-const { innerWidth, innerHeight } = window;
-
 
 function App() {
   return (
     <div className="App">
-      <Header />
       <Routes>
-        <Route path="/" element={<Blogs />} />
-        <Route path="/add-blog" element={<AddBlog />} />
-        <Route path="/articles" element={<Articles />} />
-        <Route path="/add-article" element={<AddArticle />} />
+        {/* Public route */}
+        <Route path="/login" element={<Login />} />
+
+        {/* Protected routes */}
+        <Route path="/" element={
+          <ProtectedRoute>
+            <Header />
+            <Blogs />
+          </ProtectedRoute>
+        } />
+        <Route path="/add-blog" element={
+          <ProtectedRoute>
+            <Header />
+            <AddBlog />
+          </ProtectedRoute>
+        } />
+        <Route path="/news" element={
+          <ProtectedRoute>
+            <Header />
+            <News />
+          </ProtectedRoute>
+        } />
+        <Route path="/articles" element={
+          <ProtectedRoute>
+            <Header />
+            <Articles />
+          </ProtectedRoute>
+        } />
+        <Route path="/add-article" element={
+          <ProtectedRoute>
+            <Header />
+            <AddArticle />
+          </ProtectedRoute>
+        } />
       </Routes>
     </div>
   );

@@ -59,17 +59,21 @@ const TextEditor = () => {
 	// const [blogs, setBlogs] = useState([]);
 	// const [bucketUrl, setBucketUrl] = useState([]);
 	useEffect(() => {
-		let blog, bucketUrl;
+		let blog, bucketUrl, defaultType;
 		console.log("props", blog)
 		if (state) {
 			blog = state.blog;
 			bucketUrl = state.bucketUrl;
+			defaultType = state.defaultType;
 		}
 		if (blog && blog.uuid) {
 			getBlogDetailFunc(blog.url)
 		}
 		if (bucketUrl) {
 			setBucketUrl(bucketUrl)
+		}
+		if (defaultType) {
+			setType(defaultType);
 		}
 		// getAllBlogs();
 	}, [])
