@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+
 export const ApiRequest = async (method, url, data, headers) => {
   if (!headers) {
     headers = prepareHeader().headers
@@ -25,16 +26,11 @@ export const ApiRequest = async (method, url, data, headers) => {
 }
 
 const prepareHeader = () => {
-  //   let userInfo = localStorage.getItem('userInfo');
-  //   if (userInfo) {
-  //     userInfo = JSON.parse(userInfo);
-
+  const token = localStorage.getItem('snss_admin_token');
   return {
     headers: {
       'Content-Type': 'application/json',
-      // Authorization: `Bearer ${userInfo.token}`,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-  }
-  //   }
-  //   return null;
+  };
 }

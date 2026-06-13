@@ -5,8 +5,9 @@ const addBlog = (data) => {
   return ApiRequest('post', ADD_BLOG, data)
 }
 
-const getBlogs = (data) => {
-  return ApiRequest('get', `${GET_BLOGS}?is_admin=true`, null, null)
+const getBlogs = (type) => {
+  const typeParam = type ? `&type=${type}` : '';
+  return ApiRequest('get', `${GET_BLOGS}?is_admin=true${typeParam}`, null, null)
 }
 
 const updateBlog = (data) => {
